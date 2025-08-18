@@ -1,0 +1,35 @@
+{
+  "name": "backend-codebase",
+  "type": "module",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "express-async-handler": "^1.2.0",
+    "express-validator": "^7.2.1",
+    "helmet": "^8.1.0",
+    "joi": "^18.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.17.1",
+    "morgan": "^1.10.1",
+    "nodemailer": "^7.0.5",
+    "passport": "^0.7.0",
+    "passport-apple": "^2.0.2",
+    "passport-google-oauth20": "^2.0.0",
+    "passport-microsoft": "^2.1.0",
+    "qrcode": "^1.5.4",
+    "rate-limiter-flexible": "^7.2.0",
+    "speakeasy": "^2.0.0"
+  }
+}
