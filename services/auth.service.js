@@ -63,8 +63,8 @@ export const registerUser = async ({ username, email, phone, password }) => {
   const exists = await User.findOne({ $or: [{ username }, { email }] });
   if (exists) throw new AppError("Username or email already exists.", 409);
 
-  const hashed = await bcrypt.hash(password, 10);
-  const user = new User({ username, email, phone, password: hashed });
+  const user = new User({ username, email, phone, password });
   await user.save();
   return user;
 };
+
