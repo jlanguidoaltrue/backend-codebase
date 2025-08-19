@@ -4,6 +4,8 @@ import path from "path";
 import auth from "../middlewares/auth.middleware.js";
 import { listLogs } from "../controllers/admin.controller.js";
 import { tenantContext } from "../middlewares/tenantContext.middleware.js";
+import { requirePerm, requireSystemPerm } from "../middlewares/permit.middleware.js";
+import { PERMS } from "../rbac/permissions.js";
 
 const router = express.Router();
 

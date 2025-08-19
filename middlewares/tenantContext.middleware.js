@@ -1,5 +1,5 @@
-import Membership from "../models/Membership.js";
-import Role from "../models/Role.js";
+import Membership from "../models/rbac/Membership.js";
+import Role from "../models/rbac/Role.js";
 
 export async function tenantContext(req, res, next) {
   try {
