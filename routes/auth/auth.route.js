@@ -1,17 +1,17 @@
 import { Router } from "express";
 import { RateLimiterMemory } from "rate-limiter-flexible";
-import { validate } from "../middlewares/validateJoi.middleware.js";
+import { validate } from "../../middlewares/validateJoi.middleware.js";
 import {
   loginSchema,
   refreshSchema,
   registerSchema,
-} from "../schemas/auth.schema.js";
+} from "../../schemas/auth.schema.js";
 import {
   login,
   logout,
   refresh,
   register,
-} from "../controllers/auth.controller.js";
+} from "../../controllers/auth.controller.js";
 
 const router = Router();
 

@@ -2,19 +2,19 @@ import mongoose from "mongoose";
 
 const RoleSchema = new mongoose.Schema(
   {
-    tenantId: {
+    tenant: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Tenant",
+      required: true,
       index: true,
     },
     name: { type: String, required: true },
     key: { type: String, required: true },
     permissions: { type: [String], default: [] },
   },
-  {
-    timestamps: true,
-    indexes: [{ unique: true, fields: { tenantId: 1, key: 1 } }],
-  }
+  { timestamps: true }
 );
+
+RoleSchema.index({ tenant: 1, key: 1 }, { unique: true });
 
 export default mongoose.model("Role", RoleSchema);

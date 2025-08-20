@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { oauthConfig } from "../config/oauth.config.js";
-import { issueJWT } from "../utils/jwt.js";
+import { oauthConfig } from "../../config/oauth.config.js";
+import { issueJWT } from "../../utils/jwt.js";
 import passport from "passport";
 import { randomBytes } from "node:crypto";
 const router = Router();

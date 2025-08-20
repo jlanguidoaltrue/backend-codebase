@@ -1,5 +1,5 @@
 import express from "express";
-import auth from "../middlewares/auth.middleware.js";
+import auth from "../../middlewares/auth.middleware.js";
 import {
   requestPasswordReset,
   confirmPasswordReset,
@@ -12,8 +12,8 @@ import {
   verifyEmail2FA,
   setupSMS2FA,
   verifySMS2FA,
-} from "../services/user.service.js";
-import { toSafeUser } from "../utils/userMapper.util.js";
+} from "../../services/user.service.js";
+import { toSafeUser } from "../../utils/userMapper.util.js";
 
 const router = express.Router();
 

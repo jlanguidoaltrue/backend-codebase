@@ -6,8 +6,10 @@ export async function tenantContext(req, res, next) {
     const user = req.user; // set by auth middleware
     if (!user) return res.status(401).json({ message: "Unauthorized" });
 
-    // superadmin bypass (still attach empty tenant context)
-    const isSuper = user.role === "superadmin" || user.isSuperAdmin === true;
+    const isSuper =
+      user.isAdmin === true ||
+      user.role === "superadmin" ||
+      user.isSuperAdmin === true;
 
     const tenantId =
       req.headers["x-org-id"] || req.query.org || user.defaultOrgId || null;
@@ -24,8 +26,8 @@ export async function tenantContext(req, res, next) {
 
     if (!isSuper && tenantId) {
       membership = await Membership.findOne({
-        tenant: tenantId,
-        user: user.sub || user.id,
+        tenantId,
+        userId: user.sub || user.id,
         status: { $ne: "revoked" },
       });
 
@@ -33,7 +35,14 @@ export async function tenantContext(req, res, next) {
         return res.status(403).json({ message: "Not a member of this tenant" });
       }
 
-      role = await Role.findById(membership.role);
+      if (membership.roleId) {
+        role = await Role.findById(membership.roleId);
+      } else {
+        role = await Role.findOne({
+          tenant: tenantId,
+          key: membership.roleKey,
+        });
+      }
       if (!role) return res.status(403).json({ message: "Role missing" });
 
       tenantPerms = new Set(role.permissions || []);
@@ -45,6 +54,7 @@ export async function tenantContext(req, res, next) {
       tenantId: tenantId || null,
       membershipId: membership?._id || null,
       roleId: role?._id || null,
+      roleKey: membership?.roleKey || null,
       perms: tenantPerms,
     };
 
