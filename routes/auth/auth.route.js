@@ -1,4 +1,7 @@
-import { Router } from "express";
+import express from "express";
+import * as authCtrl from "../../controllers/auth.controller.js";
+import auth from "../../middlewares/auth.middleware.js";
+import { requireSystemPerm } from "../../middlewares/permit.middleware.js";
 import { RateLimiterMemory } from "rate-limiter-flexible";
 import { validate } from "../../middlewares/validateJoi.middleware.js";
 import {
@@ -6,14 +9,8 @@ import {
   refreshSchema,
   registerSchema,
 } from "../../schemas/auth.schema.js";
-import {
-  login,
-  logout,
-  refresh,
-  register,
-} from "../../controllers/auth.controller.js";
 
-const router = Router();
+const router = express.Router();
 
 const loginLimiter = new RateLimiterMemory({
   points: 10,
@@ -32,9 +29,24 @@ const loginRateLimitMw = async (req, res, next) => {
   }
 };
 
-router.post("/login", loginRateLimitMw, validate(loginSchema), login);
-router.post("/logout", logout);
-router.post("/refresh", validate(refreshSchema), refresh);
-router.post("/register", validate(registerSchema), register);
+// Public
+router.post("/login", loginRateLimitMw, validate(loginSchema), authCtrl.login);
+router.post("/refresh", validate(refreshSchema), authCtrl.refresh);
+router.post("/forgot", authCtrl.forgotPassword);
+router.post("/reset", authCtrl.resetPassword);
+
+// Protected (admin only for registration)
+router.post(
+  "/register",
+  auth,
+  requireSystemPerm("user.create"),
+  validate(registerSchema),
+  authCtrl.register
+);
+
+// Protected user actions
+router.post("/logout", auth, authCtrl.doLogout);
+router.post("/mfa/enroll", auth, authCtrl.mfaEnroll);
+router.post("/mfa/verify", auth, authCtrl.mfaVerify);
 
 export default router;

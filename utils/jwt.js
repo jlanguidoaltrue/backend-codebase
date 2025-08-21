@@ -1,70 +1,60 @@
-// src/utils/jwt.js
 import jwt from "jsonwebtoken";
-import AppError from "./AppError.js";
+import { randomUUID } from "crypto";
+import { envVars } from "../config/envVars.js";
 
-const {
-  JWT_ACCESS_SECRET,
-  JWT_REFRESH_SECRET,
-  JWT_ACCESS_EXPIRES = "15m",
-  JWT_REFRESH_EXPIRES = "7d",
-} = process.env;
-
-if (!JWT_ACCESS_SECRET || !JWT_REFRESH_SECRET) {
-  console.warn(
-    "[JWT] Missing JWT_ACCESS_SECRET and/or JWT_REFRESH_SECRET – set them in your .env"
+export const signAccessToken = (payload) => {
+  return jwt.sign(
+    { ...payload },
+    envVars.JWT_ACCESS_SECRET,
+    { expiresIn: envVars.JWT_ACCESS_EXPIRES, jwtid: randomUUID() }
   );
-}
+};
 
-export function signAccessToken(payload, opts = {}) {
-  return jwt.sign(payload, JWT_ACCESS_SECRET, {
-    expiresIn: JWT_ACCESS_EXPIRES,
-    ...opts,
-  });
-}
+// Refresh tokens are long lived and are stored in DB (rotation + revocation support)
+export const signRefreshToken = (payload, opts = {}) => {
+  // include jti in token for DB correlation
+  const jti = opts.jti || randomUUID();
+  const token = jwt.sign(
+    { ...payload, jti },
+    envVars.JWT_REFRESH_SECRET,
+    { expiresIn: `${envVars.JWT_REFRESH_EXPIRES_DAYS}d`, jwtid: jti }
+  );
+  return { token, jti };
+};
 
-export function signRefreshToken(payload, opts = {}) {
-  return jwt.sign(payload, JWT_REFRESH_SECRET, {
-    expiresIn: JWT_REFRESH_EXPIRES,
-    ...opts,
-  });
-}
-
-export function verifyAccessToken(token) {
+export const verifyAccessToken = (token) => {
   try {
-    return jwt.verify(token, JWT_ACCESS_SECRET, { clockTolerance: 5 });
-  } catch {
-    throw new AppError("Invalid or expired access token.", 401);
+    return jwt.verify(token, envVars.JWT_ACCESS_SECRET);
+  } catch (e) {
+    const err = new Error("Invalid access token");
+    err.status = 401;
+    throw err;
   }
-}
+};
 
-export function verifyRefreshToken(token) {
+export const verifyRefreshToken = (token) => {
   try {
-    return jwt.verify(token, JWT_REFRESH_SECRET, { clockTolerance: 5 });
-  } catch {
-    throw new AppError("Invalid or expired refresh token.", 401);
+    return jwt.verify(token, envVars.JWT_REFRESH_SECRET);
+  } catch (e) {
+    const err = new Error("Invalid refresh token");
+    err.status = 401;
+    throw err;
   }
-}
-export function issueTokenPair(user) {
+};
+/**
+ * Backwards-compatible helper used by older oauth routes.
+ * Returns { token, refreshToken, jti } where token = access token.
+ * Use issueTokens (service) when DB-backed refresh rotation is required.
+ */
+export const issueJWT = (user, opts = {}) => {
   const payload = {
-    sub: user._id?.toString?.() || String(user.sub || user.id),
-    role: user.role || (user.isAdmin ? "admin" : "user"),
+    id: user._id ?? user.id,
+    isAdmin: user.isAdmin ?? false,
+    ...opts.claims,
   };
-  return {
-    accessToken: signAccessToken(payload),
-    refreshToken: signRefreshToken({ sub: payload.sub }),
-  };
-}
 
-export function issueJWT(user) {
-  const payload = {
-    sub: user._id?.toString?.() || String(user.sub || user.id),
-    role: user.role || (user.isAdmin ? "admin" : "user"),
-  };
-  return signAccessToken(payload);
-}
+  const token = signAccessToken(payload);
+  const { token: refreshToken, jti } = signRefreshToken(payload, { jti: opts.jti });
 
-export function getBearerToken(req) {
-  const h = req.headers?.authorization || "";
-  if (!h.startsWith("Bearer ")) return null;
-  return h.slice(7).trim();
-}
+  return { token, refreshToken, jti };
+};

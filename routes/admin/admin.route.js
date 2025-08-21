@@ -5,6 +5,6 @@ import { listLogs } from "../../controllers/admin.controller.js";
 
 const router = express.Router();
 
-router.get("/logs", auth, requireSystemPerm(), listLogs); // no tenantContext here
+router.get("/logs", auth, requireSystemPerm(), listLogs);
 
 export default router;
