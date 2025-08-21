@@ -1,7 +1,8 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { encryptField, decryptField } from "../utils/cryptoEncrypt.js";
 
-const SALT_ROUNDS = 10;
+const SALT_ROUNDS = 12;
 
 const IdentitySchema = new mongoose.Schema(
   {
@@ -107,12 +108,31 @@ UserSchema.pre("save", async function (next) {
     const salt = await bcrypt.genSalt(SALT_ROUNDS);
     this.password = await bcrypt.hash(this.password, salt);
   }
+
+  // Encrypt totpSecret if present and plain (object with base32)
+  if (this.isModified("totpSecret") && this.totpSecret) {
+    // If totpSecret is plain string or object, encrypt to container
+    if (typeof this.totpSecret === "string" || this.totpSecret.base32) {
+      const toEnc =
+        typeof this.totpSecret === "string"
+          ? this.totpSecret
+          : this.totpSecret.base32;
+      this.totpSecret = encryptField(toEnc);
+    }
+  }
+
   next();
 });
 
+// Instance methods
 UserSchema.methods.verifyPassword = function (plain) {
   if (!this.password) return false; // OAuth-only user has no local password
   return bcrypt.compare(plain, this.password);
+};
+
+UserSchema.methods.getTotpSecret = function () {
+  if (!this.totpSecret) return null;
+  return decryptField(this.totpSecret);
 };
 
 UserSchema.set("toJSON", {
